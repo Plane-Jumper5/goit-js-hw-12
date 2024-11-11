@@ -18,7 +18,7 @@ form.addEventListener('submit', async (event) => {
 
     if(!query) {
         iziToast.error({ 
-            title: 'Error', message: 'Будь-ласка введіть пошуковий запит' });
+            title: 'Error', message: 'Please enter a search query' });
             return;
     }
      page = 1;
