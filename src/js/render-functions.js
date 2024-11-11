@@ -1,42 +1,32 @@
-import SimpleLightbox from "simplelightbox";
-import "simplelightbox/dist/simple-lightbox.min.css";
+import SimpleLightbox from 'simplelightbox';
+import 'simplelightbox/dist/simple-lightbox.min.css';
 
-const getGalleryItem = ({ webformatURL, largeImageURL, tags, likes, views, comments, downloads }) => {
-  return `<li class="gallery-item">
-  <a class="gallery-link" href="${largeImageURL}">
-    <img class="gallery-image" src="${webformatURL}" alt="${tags}" />
-    <div class="image-details">
-       <div class="details-header">Likes</div>
-        <div class="details-header">Views</div>
-        <div class="details-header">Comments</div>
-        <div class="details-header">Downloads</div>
-        <div class="details-value">${likes}</div>
-        <div class="details-value">${views}</div>
-        <div class="details-value">${comments}</div>
-        <div class="details-value">${downloads}</div>
-      </div>
-  </a>
-</li>`;
-};
+let lightbox;
 
-const lightbox = new SimpleLightbox('.gallery a', {
-  captions: true,
-  captionsData: 'alt',
-  captionDelay: 250,
-  animationSpeed: 300,
-  overlay: true,
-  overlayOpacity: 0.5,
-});
+export function renderImages(images) {
+  const gallery = document.querySelector('.gallery');
+  const markup = images
+    .map(
+      ({ webformatURL, largeImageURL, tags, likes, views, comments, downloads }) =>
+        `<li>
+          <a href="${largeImageURL}">
+            <div class="image-info">
+              <img src="${webformatURL}" alt="${tags}" width="300" height="200">
+              <p><strong>Likes:</strong> ${likes}</p>
+              <p><strong>Views:</strong> ${views}</p>
+              <p><strong>Comments:</strong> ${comments}</p>
+              <p><strong>Downloads:</strong> ${downloads}</p>
+            </div>
+          </a>
+        </li>`
+    )
+    .join('');
 
-lightbox.on('show.simplelightbox', function () {
-});
+  gallery.insertAdjacentHTML('beforeend', markup);
 
-lightbox.on('closed.simplelightbox', function () {
-});
-
-const renderGallery = (gallery, images) => {
-  gallery.innerHTML = images.map(image => getGalleryItem(image)).join('');
-  lightbox.refresh();
-};
-
-export { renderGallery};
+  if (!lightbox) {
+    lightbox = new SimpleLightbox('.gallery a');
+  } else {
+    lightbox.refresh();
+  }
+}

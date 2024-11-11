@@ -1,36 +1,64 @@
-import { errorMessage, successMessage } from './js/iziestyles.js';
-import { fetchImages } from './js/pixabay-api.js';
-import { renderGallery } from './js/render-functions.js';
+import { fetchImages } from './js/pixabay-api';
+import { renderImages } from './js/render-functions';
+import iziToast from 'izitoast';
+import 'izitoast/dist/css/iziToast.min.css';
 
-const searchFieldSelector = document.querySelector('.search-field');
-const loaderContainer = document.querySelector('.loader-container');
-const gallery = document.querySelector('.gallery');
+const form = document.querySelector(".search-form");
+const loader = document.querySelector(".loader");
+const gallery = document.querySelector(".gallery");
+const loadBtn = document.querySelector(".btn-load");
 
-function showLoader() {
-  loaderContainer.style.display = 'flex';
-}
+let query = '';
+let page = 1;
+let per_page = 15;
 
-function hideLoader() {
-  loaderContainer.style.display = 'none';
-}
+form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+     query = event.currentTarget.elements.searchQuery.value.trim();
 
-document.querySelector('.form').addEventListener('submit', (event) => {
-  event.preventDefault();
+    if(!query) {
+        iziToast.error({ 
+            title: 'Error', message: 'Будь ласка, введіть пошуковий запит' });
+            return;
+    }
+     page = 1;
+     gallery.innerHTML = '';
+     loadBtn.style.display = 'none';
+     fetchRenderImages();
+});
+const fetchRenderImages = async () => {
+    try {
+        loader.style.display ='block';
+        const data = await fetchImages(query, page, per_page);
+        loader.style.display = 'none';
 
-  const query = searchFieldSelector.value.trim();
-  if (query.length === 0) {
-    return;
-  }
+        if(data.hits.length === 0) {
+            iziToast.info({
+                message: 'На жаль, немає зображень, які відповідають вашому пошуковому запиту. Будь ласка, спробуйте ще раз!'
+            });
+            loadBtn.style.display = 'none';
+            return;
+        }
+        renderImages(data.hits);
+        page += 1;
 
-  showLoader();
-  fetchImages(query)
-    .then(images => {
-      renderGallery(gallery, images);
-      hideLoader();
-    })
-    .catch((error) => {
-      errorMessage(error.message);
-      hideLoader();
-      gallery.innerHTML = '';
+        if(data.hits.length < per_page || page > Math.ceil(data.totalHits / per_page)) {
+            loadBtn.style.display = 'none';
+            iziToast.info({ message: 'Вибачте, але ви досягли кінця результатів пошуку'})
+        } else {
+            loadBtn.style.display = 'block';
+        }
+    } catch (error) {
+        loadBtn.style.display = 'none';
+        iziToast.error({title: 'Error', message: error.message});
+    }
+};
+
+loadBtn.addEventListener('click', async () => {
+    await fetchRenderImages();
+    const galleryRect = document.querySelector('.gallery').lastElementChild.getBoundingClientRect();
+    window.scrollBy({
+        top: galleryRect.height * 2,
+        behavior: 'smooth'
     });
 });
